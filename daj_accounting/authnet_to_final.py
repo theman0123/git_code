@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 
 #input('Type File Name To Extract From: ')
 #june_auth_gtf.xlsx or july_auth_gtf.xlsx
-authnet_file = 'june_auth_gtf.xlsx' 
+authnet_file = 'authnet_july.xlsx' 
 #do you want to type the member file name?
 #'final_gtf.xlsx'
 #input('Where Is The Member File? ')
@@ -239,5 +239,5 @@ def clean_up():
 
 clean_up()
 #input()
-wb2.save('finished2_june_gtf.xlsx')
+wb2.save('finished2_july_gtf.xlsx')
 print('FINISHED')
