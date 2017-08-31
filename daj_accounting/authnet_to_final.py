@@ -9,7 +9,7 @@ authnet_file = 'june_auth_gtf.xlsx'
 #do you want to type the member file name?
 #'final_gtf.xlsx'
 #input('Where Is The Member File? ')
-member_file = 'final_gtf.xlsx'
+member_file = 'final_members_test.xlsx'
 
 wb = load_workbook(authnet_file)
 wb2 = load_workbook(member_file)
@@ -176,9 +176,15 @@ def map_to_final():
         for col in 'I':
             hundreds = "{}{}".format(col, row)
         for col in 'A':
-            f_name = ws2["{}{}".format(col, row)].value.lower()
+            if isinstance(ws2["{}{}".format(col, row)].value, str):
+                f_name = ws2["{}{}".format(col, row)].value.lower()
+            else:
+                l_name = ws2["{}{}".format(col, row)].value = 'none'
         for col in 'B':
-            l_name = ws2["{}{}".format(col, row)].value.lower()  
+            if isinstance(ws2["{}{}".format(col, row)].value, str):
+                l_name = ws2["{}{}".format(col, row)].value.lower()
+            else:
+                l_name = ws2["{}{}".format(col, row)].value = 'none'
             for person in peeps:
                 if person.first_name == f_name and person.last_name == l_name:
                     #create a list of current members--to be used later#
@@ -211,15 +217,23 @@ def add_new_members():
 add_new_members()
 
 def clean_up():
-    
+    print('Adding "zz" To Duplicates... Remember To Sort Member Sheet...')
     for row in range(1, ws2.max_row-1):
         for col in 'A':
-            f_name = ws2["{}{}".format(col, row)].value.lower()
-            next_f = ws2["{}{}".format(col, row+1)].value.lower()
             f_cell = ws2["{}{}".format(col, row)]
-        for col in 'B':
-            l_name = ws2["{}{}".format(col, row)].value.lower()
-            next_l = ws2["{}{}".format(col, row+1)].value.lower()           
+            if isinstance(ws2["{}{}".format(col, row)].value, str):
+                f_name = ws2["{}{}".format(col, row)].value.lower()
+                next_f = ws2["{}{}".format(col, row+1)].value.lower()                
+            else:
+                l_name = ws2["{}{}".format(col, row)].value = 'none'
+                next_l = ws2["{}{}".format(col, row+1)].value = 'none'
+        for col in 'B':            
+            if isinstance(ws2["{}{}".format(col, row)].value, str):
+                l_name = ws2["{}{}".format(col, row)].value.lower()
+                next_l = ws2["{}{}".format(col, row+1)].value.lower()
+            else:
+                l_name = ws2["{}{}".format(col, row)].value = 'none'
+                next_l = ws2["{}{}".format(col, row+1)].value = 'none'           
             if f_name == next_f and l_name == next_l:
                 f_cell.value = 'zz' + f_name
 
