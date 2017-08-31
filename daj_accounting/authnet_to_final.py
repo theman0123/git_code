@@ -3,10 +3,12 @@ from openpyxl import load_workbook
 #program will not catch:
 # a double last name, or empty name cells
 
-#input('type file name to extract from: ')
+#input('Type File Name To Extract From: ')
 #june_auth_gtf.xlsx or july_auth_gtf.xlsx
-authnet_file =  'june_auth_gtf.xlsx'
+authnet_file = 'june_auth_gtf.xlsx' 
 #do you want to type the member file name?
+#'final_gtf.xlsx'
+#input('Where Is The Member File? ')
 member_file = 'final_gtf.xlsx'
 
 wb = load_workbook(authnet_file)
@@ -31,7 +33,8 @@ def get_total():
 get_total()    
 
 def peeps_all():
-    
+    print('Please Check The Following Cells')
+    print('--------------')
     peeps_set = set([])
     
     for row in range(1, ws.max_row+1):
@@ -49,6 +52,7 @@ def peeps_all():
                     l_name = 'none' + str(cell_lname.value)
                     new_person = str(f_name + ' ' + l_name)
                     peeps_set.add(new_person)
+                    print('empty cells', cell_lname)
                 elif f_name == None:
                     f_name = 'none'
                     new_person = str(f_name + ' ' + l_name)
@@ -57,6 +61,18 @@ def peeps_all():
                     l_name = 'none'
                     new_person = str(f_name + ' ' + l_name)
                     peeps_set.add(new_person)
+                    print('empty cells', cell_lname)
+                elif len(l_name.split(' ')) == 2:
+                    peeps_set.add(f_name + ' ' + l_name)                    
+                    last_split = l_name.split(' ')
+                    if last_split[0].lower() != 'mc' and \
+                    last_split[0].lower() != 'van' and \
+                    last_split[0].lower() != 'st' and \
+                    last_split[1].lower() != 'ii' and \
+                    last_split[1].lower() != 'iii' and \
+                    last_split[1].lower() != 'jr.':
+                        print('2 last names?')
+                        print(l_name, cell_lname)
                 else:    
                     new_person = str(f_name + ' ' + l_name)
                     peeps_set.add(new_person)
@@ -86,13 +102,12 @@ def unique_to_person():
         if len(new_p) == 2:
             unique.add(Person(new_p[0], new_p[1]))
         elif len(new_p) == 3:
-            if new_p[2] == "Jr." or new_p[2] == "jr.":#jr with last name
+            if new_p[2].lower() == 'jr.':#jr with last name
                 unique.add(Person(new_p[0], new_p[1] + ' ' + new_p[2]))
-            elif new_p[2] == 'II' or new_p[2] == 'ii' or new_p[2] == 'III' \
-                                                      or new_p[2] == 'iii':
+            elif new_p[2].lower() == 'ii' or new_p[2].lower() == 'iii':#ii or iii
                 unique.add(Person(new_p[0], new_p[1] + ' ' + new_p[2]))
-            elif new_p[1] == 'van' or new_p[1] == 'Van' or new_p[1] == 'mc' \
-                                   or new_p[1] == 'MC' or new_p[1] == 'Mc':
+            elif new_p[1].lower() == 'van' or new_p[1].lower() == 'mc' \
+                            or new_p[1].lower() == 'st':#misc last name combos
                 unique.add(Person(new_p[0], new_p[1] + ' ' + new_p[2]))                                      
             elif new_p[2] == 'none':#check for 'none' as false last name
                 unique.add(Person(new_p[0], new_p[1]))
@@ -101,7 +116,7 @@ def unique_to_person():
         elif len(new_p) == 4:
             if new_p[3] == 'none':#middle name with false last name as 'none'
                 unique.add(Person(new_p[0] + ' ' + new_p[1], new_p[2]))
-            elif new_p[1] == '&':
+            elif new_p[1] == '&':#couples
                 unique.add(Person(new_p[0] + ' & ' + new_p[2], new_p[3]))
             else:
                 unique.add(Person(new_p[0] + ' ' + new_p[1] + ' ' + new_p[2], \
@@ -209,5 +224,6 @@ def clean_up():
                 f_cell.value = 'zz' + f_name
 
 clean_up()
+#input()
 wb2.save('finished2_june_gtf.xlsx')
 print('FINISHED')
