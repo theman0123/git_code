@@ -30,8 +30,36 @@ def get_total():
                 total += float(value)
     print('TOTAL: {0}'.format(total))
 
-get_total()    
+def get_column_t():
+    hunda = 0
+    montha = 0
+    inita = 0
+    
+    for row in range(1, ws.max_row+1):
+        for col in 'B':
+            cell = ws["{}{}".format(col, row)].value
+        for col in 'C':
+            value = ws["{}{}".format(col, row)].value
+            if cell == 'Credited':
+                if value >= 1000:
+                    inita -= value
+                elif (value == 100 or value == 200) and value < 1000:
+                    montha -= value
+                else:
+                    hunda -= value
+            if cell == 'Settled Successfully':
+                if value >= 1000:
+                    inita += value
+                elif (value == 100 or value == 200) and value < 1000:
+                    montha += value
+                else:
+                    hunda += value
+    print('initial total: ', inita)
+    print('monthly total: ', montha)
+    print('hundreds total: ', hunda)
 
+get_total()    
+get_column_t()
 def peeps_all():
     print('Please Check The Following Cells')
     print('--------------')
@@ -71,8 +99,9 @@ def peeps_all():
                     last_split[1].lower() != 'ii' and \
                     last_split[1].lower() != 'iii' and \
                     last_split[1].lower() != 'jr.':
-                        print('2 last names?')
-                        print(l_name, cell_lname)
+                        print('||' + l_name+ '||', cell_lname)
+                elif len(l_name.split(' ')) >= 3:
+                    print(l_name, cell_lname)
                 else:    
                     new_person = str(f_name + ' ' + l_name)
                     peeps_set.add(new_person)
@@ -219,6 +248,12 @@ add_new_members()
 def clean_up():
     print('Adding "zz" To Duplicates... Remember To Sort Member Sheet...')
     for row in range(1, ws2.max_row-1):
+        for col in 'G':
+            initial = ws2["{}{}".format(col, row)]
+        for col in 'H':
+            monthly = ws2["{}{}".format(col, row)]
+        for col in 'I':
+            hundreds = ws2["{}{}".format(col, row)]
         for col in 'A':
             f_cell = ws2["{}{}".format(col, row)]
             if isinstance(ws2["{}{}".format(col, row)].value, str):
@@ -236,6 +271,9 @@ def clean_up():
                 next_l = ws2["{}{}".format(col, row+1)].value = 'none'           
             if f_name == next_f and l_name == next_l:
                 f_cell.value = 'zz' + f_name
+                initial.value = 0
+                monthly.value = 0
+                hundreds.value = 0
 
 clean_up()
 #input()
