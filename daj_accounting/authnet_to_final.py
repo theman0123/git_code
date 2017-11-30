@@ -1,11 +1,13 @@
 from openpyxl import load_workbook
+from Levenshtein import distance
 
 #program will not catch:
 # a double last name, or empty name cells
 
+#build a program that checks for duplicates and sums columns (see get_column_t)
 #input('Type File Name To Extract From: ')
 #june_auth_gtf.xlsx or july_auth_gtf.xlsx
-authnet_file = 'authnet_july.xlsx' 
+authnet_file = 'july_auth_gtf.xlsx' 
 #do you want to type the member file name?
 #'final_gtf.xlsx'
 #input('Where Is The Member File? ')
@@ -17,53 +19,10 @@ wb2 = load_workbook(member_file)
 ws = wb[wb.sheetnames[0]]
 ws2 = wb2[wb2.sheetnames[0]]
 
-def get_total():
-    total = 0
-    for row in range(1, ws.max_row+1):
-        for col in 'B':
-            cell = ws["{}{}".format(col, row)].value
-        for col in 'C':
-            value = ws["{}{}".format(col, row)].value
-            if cell == 'Credited':
-                total -= float(value)
-            if cell == 'Settled Successfully':
-                total += float(value)
-    print('TOTAL: {0}'.format(total))
-
-def get_column_t():
-    hunda = 0
-    montha = 0
-    inita = 0
-    
-    for row in range(1, ws.max_row+1):
-        for col in 'B':
-            cell = ws["{}{}".format(col, row)].value
-        for col in 'C':
-            value = ws["{}{}".format(col, row)].value
-            if cell == 'Credited':
-                if value >= 1000:
-                    inita -= value
-                elif (value == 100 or value == 200) and value < 1000:
-                    montha -= value
-                else:
-                    hunda -= value
-            if cell == 'Settled Successfully':
-                if value >= 1000:
-                    inita += value
-                elif (value == 100 or value == 200) and value < 1000:
-                    montha += value
-                else:
-                    hunda += value
-    print('initial total: ', inita)
-    print('monthly total: ', montha)
-    print('hundreds total: ', hunda)
-
-get_total()    
-get_column_t()
 def peeps_all():
     print('Please Check The Following Cells')
     print('--------------')
-    peeps_set = set([])
+    peeps_list = []
     
     for row in range(1, ws.max_row+1):
         for col in 'Y':
@@ -72,26 +31,29 @@ def peeps_all():
         for col in 'Z':
             l_name = ws["{}{}".format(col, row)].value
             cell_lname = ws["{}{}".format(col, row)]
+            last_name_col_row = "{}{}".format(col, row)
         for col in 'B':
             cell = ws["{}{}".format(col, row)].value
+        for col in 'C':
+            amount = ws["{}{}".format(col, row)].value
             if cell == 'Credited' or cell == 'Settled Successfully':
                 if f_name == None and l_name == None:
                     f_name = 'none' + str(cell_fname.value)
                     l_name = 'none' + str(cell_lname.value)
                     new_person = str(f_name + ' ' + l_name)
-                    peeps_set.add(new_person)
+                    peeps_list.append(new_person)
                     print('empty cells', cell_lname)
                 elif f_name == None:
                     f_name = 'none'
                     new_person = str(f_name + ' ' + l_name)
-                    peeps_set.add(new_person)
+                    peeps_list.append(new_person)
                 elif l_name == None:
                     l_name = 'none'
                     new_person = str(f_name + ' ' + l_name)
-                    peeps_set.add(new_person)
+                    peeps_list.append(new_person)
                     print('empty cells', cell_lname)
                 elif len(l_name.split(' ')) == 2:
-                    peeps_set.add(f_name + ' ' + l_name)                    
+                    peeps_list.append(f_name + ' ' + l_name)                    
                     last_split = l_name.split(' ')
                     if last_split[0].lower() != 'mc' and \
                     last_split[0].lower() != 'van' and \
@@ -99,12 +61,13 @@ def peeps_all():
                     last_split[1].lower() != 'ii' and \
                     last_split[1].lower() != 'iii' and \
                     last_split[1].lower() != 'jr.':
-                        print('||' + l_name+ '||', cell_lname)
+                        print('||' + l_name + '||', last_name_col_row, '{}{}'.format('$', amount))
                 elif len(l_name.split(' ')) >= 3:
-                    print(l_name, cell_lname)
+                    print(l_name, last_name_col_row, '{}{}'.format('$', amount))
                 else:    
                     new_person = str(f_name + ' ' + l_name)
-                    peeps_set.add(new_person)
+                    peeps_list.append(new_person)
+                    peeps_set = list(set(peeps_list))
     return peeps_set
     
 class Person:
@@ -152,7 +115,7 @@ def unique_to_person():
                                                                    new_p[3]))                     
         else:
             unique.add(Person(new_p[0], new_p[len(new_p)]))
-    return unique
+    return list(set(unique))
 
 def get_amounts():
     peeps = unique_to_person()
@@ -173,26 +136,30 @@ def get_amounts():
         for col in 'C':
             value = ws["{}{}".format(col, row)].value            
             if cell == 'Settled Successfully':
+                
                 for person in peeps:                        
                     if person.first_name == f_name and person.last_name == l_name:
+#                        settle += value                        
                         if value >= 1000:
                             person.initial += value
                         elif value == 100 or value == 200:
                             person.hundreds += value
                         elif (value != 100 or value != 200) and value < 1000:
                             person.monthly += value
-            elif cell == 'Credited':                
+            elif cell == 'Credited':
+                                
                 for person in peeps:
                     if person.first_name == f_name and person.last_name == l_name:                        
+                        #credit += value                        
                         if value >= 1000:
                             person.initial -= value
                         elif value == 100 or value == 200:
                             person.hundreds -= value
                         elif (value != 100 or value != 200) and value < 1000:
                             person.monthly -= value
-    return peeps                        
+    return list(set(peeps))                        
 
-peeps = get_amounts()
+peeps = get_amounts()    
 
 def map_to_final():
     members_set = set([])
@@ -215,14 +182,47 @@ def map_to_final():
             else:
                 l_name = ws2["{}{}".format(col, row)].value = 'none'
             for person in peeps:
-                if person.first_name == f_name and person.last_name == l_name:
-                    #create a list of current members--to be used later#
-                    new_person = Person(f_name, l_name)
-                    members_set.add(new_person)
+                if person.first_name == f_name and person.last_name == l_name:                    
                     #populate cells with data#
-                    ws2[initial] = person.initial
-                    ws2[monthly] = person.monthly
-                    ws2[hundreds] = person.hundreds
+                    #print cell_values#
+                    if ws2[initial].value != None:
+                        print(person.first_name, person.last_name, ws2[initial].value, person.initial)
+                        ws2[initial] = ws2[initial].value + person.initial
+                    else: ws2[initial] = person.initial 
+                    if ws2[monthly].value != None:
+                        print(person.first_name, person.last_name, ws2[monthly].value, person.monthly)                            
+                        ws2[monthly] = ws2[monthly].value + person.monthly
+                    else: ws2[monthly] = person.monthly                        
+                    if ws2[hundreds].value != None:
+                        print(person.first_name, person.last_name, ws2[hundreds].value, person.hundreds)
+                        ws2[hundreds] = ws2[hundreds].value + person.hundreds
+                    else: ws2[hundreds] = person.hundreds
+                    #create a list(set) of current members--to be used later#
+                    members_set.add(person)
+                elif distance(person.first_name + person.last_name,
+                                              f_name + l_name) < 3:
+                    print('Same Person? ' + 
+                         person.first_name + ' ' + person.last_name,
+                                              f_name + ' ' + l_name)
+                    answer = input('y/n: ')
+                    if answer.lower() == 'y':
+                        #add person from peep set (gtf) to members_set (members sheet), since we've answered 'y'#                       
+                        person.first_name = f_name
+                        person.last_name = l_name
+                        if ws2[initial].value != None:
+                            print(person.first_name, person.last_name, ws2[initial].value, person.initial)
+                            ws2[initial] = ws2[initial].value + person.initial
+                        else: ws2[initial] = person.initial 
+                        if ws2[monthly].value != None:
+                            print(person.first_name, person.last_name, ws2[monthly].value, person.monthly)                            
+                            ws2[monthly] = ws2[monthly].value + person.monthly
+                        else: ws2[monthly] = person.monthly                        
+                        if ws2[hundreds].value != None:
+                            print(person.first_name, person.last_name, ws2[hundreds].value, person.hundreds)
+                            ws2[hundreds] = ws2[hundreds].value + person.hundreds
+                        else: ws2[hundreds] = person.hundreds
+                        #add to members_set
+                        members_set.add(person)
     return members_set
 
 members_set = map_to_final()
@@ -246,7 +246,7 @@ def add_new_members():
 add_new_members()
 
 def clean_up():
-    print('Adding "zz" To Duplicates... Remember To Sort Member Sheet...')
+    print('::Finding Duplicates... Remember To Sort Member Sheet...::')
     for row in range(1, ws2.max_row-1):
         for col in 'G':
             initial = ws2["{}{}".format(col, row)]
@@ -255,7 +255,6 @@ def clean_up():
         for col in 'I':
             hundreds = ws2["{}{}".format(col, row)]
         for col in 'A':
-            f_cell = ws2["{}{}".format(col, row)]
             if isinstance(ws2["{}{}".format(col, row)].value, str):
                 f_name = ws2["{}{}".format(col, row)].value.lower()
                 next_f = ws2["{}{}".format(col, row+1)].value.lower()                
@@ -270,12 +269,67 @@ def clean_up():
                 l_name = ws2["{}{}".format(col, row)].value = 'none'
                 next_l = ws2["{}{}".format(col, row+1)].value = 'none'           
             if f_name == next_f and l_name == next_l:
-                f_cell.value = 'zz' + f_name
                 initial.value = 0
                 monthly.value = 0
                 hundreds.value = 0
-
+#            elif f_name == 'none' and l_name == 'none':
+#                #remove 'none' values
+#                f_name = None
+#                l_name = None
+#                initial.value = None
+#                monthly.value = None
+#                hundreds.value = None
 clean_up()
+
+def get_total():
+    total = 0
+    for row in range(1, ws.max_row+1):
+        for col in 'B':
+            cell = ws["{}{}".format(col, row)].value
+        for col in 'C':
+            value = ws["{}{}".format(col, row)].value
+            if cell == 'Credited':
+                total -= float(value)
+            if cell == 'Settled Successfully':
+                total += float(value)
+    print('TOTAL: {0}'.format(total))
+
+def get_column_t():
+    hunda = 0
+    montha = 0
+    inita = 0
+    settle = 0
+    credit = 0
+    
+    for row in range(1, ws.max_row+1):
+        for col in 'B':
+            cell = ws["{}{}".format(col, row)].value
+        for col in 'C':
+            value = ws["{}{}".format(col, row)].value
+            if cell == 'Credited':
+                credit += value
+                if value >= 1000:
+                    inita -= value
+                elif (value == 100 or value == 200) and value < 1000:
+                    montha -= value
+                else:
+                    hunda -= value
+            if cell == 'Settled Successfully':
+                settle += value
+                if value >= 1000:
+                    inita += value
+                elif (value == 100 or value == 200) and value < 1000:
+                    montha += value
+                else:
+                    hunda += value
+    print('initial total: ', inita)
+    print('monthly total: ', montha)
+    print('hundreds total: ', hunda)
+    print('settled total: ', settle)
+    print('credited total: ', credit)
+get_total()    
+get_column_t()
+
 #input()
 wb2.save('finished2_july_gtf.xlsx')
 print('FINISHED')
